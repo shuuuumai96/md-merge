@@ -2,28 +2,51 @@
 
 `md-merge` is a small cross-platform Go CLI that recursively finds Markdown files under a directory and merges them into one Markdown document.
 
-## Installation
+Use it when you want a single Markdown file from a tree of docs, notes, or project files without adding third-party runtime dependencies.
+
+```sh
+md-merge ./docs -o merged.md
+```
+
+## Quick Start
 
 ```sh
 go install github.com/shuuuumai96/md-merge@latest
+md-merge ./docs -o merged.md
 ```
+
+## Example
+
+Preview the files that would be merged:
+
+```sh
+md-merge ./docs --dry-run
+```
+
+Write a merged file with a simple file list TOC:
+
+```sh
+md-merge ./docs --with-toc -o merged.md
+```
+
+Skip draft and archive paths:
+
+```sh
+md-merge ./docs -o merged.md --exclude "**/drafts/**" --exclude archive
+```
+
+## Use Cases
+
+- Bulk documentation review
+- Preparing Markdown for AI tools
+- Combining project notes
+- Preparing a single Markdown input for other tools
 
 ## Build From Source
 
 ```sh
 go test ./...
 go build -o md-merge
-```
-
-## Usage
-
-```sh
-md-merge ./docs
-md-merge ./docs -o merged.md
-md-merge ./docs --output merged.md
-md-merge ./docs --dry-run
-md-merge ./docs --with-toc -o merged.md
-md-merge ./docs --exclude archive --exclude "**/drafts/**"
 ```
 
 ## Flags
