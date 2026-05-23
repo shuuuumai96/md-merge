@@ -89,6 +89,50 @@ func TestParseArgsValidForms(t *testing.T) {
 	})
 }
 
+func TestHelpBehavior(t *testing.T) {
+	for _, args := range [][]string{{"--help"}, {"-h"}, {"docs", "--help"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			result := runInProcess(t, args...)
+			assertEqual(t, "exit code", result.code, cli.ExitSuccess)
+			assertEqual(t, "stderr", result.stderr, "")
+			assertContains(t, result.stdout, "md-merge")
+			assertContains(t, result.stdout, "Usage:")
+			for _, flag := range []string{
+				"--output",
+				"--dry-run",
+				"--with-toc",
+				"--exclude",
+				"--extensions",
+				"--sort",
+				"--strict",
+				"--max-size",
+				"--help",
+			} {
+				assertContains(t, result.stdout, flag)
+			}
+			assertNotContains(t, result.stdout, "unknown flag")
+			assertNotContains(t, result.stdout, "target directory is required")
+		})
+	}
+}
+
+func TestHelpDoesNotWriteOutputFile(t *testing.T) {
+	output := filepath.Join(t.TempDir(), "out.md")
+	result := runInProcess(t, "--help", "-o", output)
+	assertEqual(t, "exit code", result.code, cli.ExitSuccess)
+	assertEqual(t, "stderr", result.stderr, "")
+	if _, err := os.Stat(output); !os.IsNotExist(err) {
+		t.Fatalf("help should not create output file, stat err = %v", err)
+	}
+}
+
+func TestUnknownFlagStillFailsWithoutHelp(t *testing.T) {
+	result := runInProcess(t, "--bad")
+	assertEqual(t, "exit code", result.code, cli.ExitInvalidInput)
+	assertContains(t, result.stderr, "unknown flag")
+	assertEqual(t, "stdout", result.stdout, "")
+}
+
 func TestScanRecursiveBehavior(t *testing.T) {
 	root := t.TempDir()
 	writeText(t, root, "a.md", "a")
