@@ -38,6 +38,8 @@ md-merge ./docs --exclude archive --exclude "**/drafts/**"
 | `--sort <mode>` | Sort by `path`, `name`, or `modified`. Default: `path`. |
 | `--strict` | Stop on unreadable files, invalid UTF-8, or max-size skips. |
 | `--max-size <bytes>` | Skip files larger than this value. `0` means unlimited. Default: `0`. |
+| `-h`, `--help` | Show help message. |
+| `--version` | Show version information. |
 
 ## Output Format
 
