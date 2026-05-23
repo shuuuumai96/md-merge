@@ -107,6 +107,7 @@ func TestHelpBehavior(t *testing.T) {
 				"--strict",
 				"--max-size",
 				"--help",
+				"--version",
 			} {
 				assertContains(t, result.stdout, flag)
 			}
@@ -123,6 +124,50 @@ func TestHelpDoesNotWriteOutputFile(t *testing.T) {
 	assertEqual(t, "stderr", result.stderr, "")
 	if _, err := os.Stat(output); !os.IsNotExist(err) {
 		t.Fatalf("help should not create output file, stat err = %v", err)
+	}
+}
+
+func TestVersionBehavior(t *testing.T) {
+	for _, args := range [][]string{{"--version"}, {"docs", "--version"}, {"--version", "docs"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			result := runInProcess(t, args...)
+			assertEqual(t, "exit code", result.code, cli.ExitSuccess)
+			assertEqual(t, "stderr", result.stderr, "")
+			if !strings.HasPrefix(result.stdout, "md-merge ") {
+				t.Fatalf("version output = %q, want it to start with %q", result.stdout, "md-merge ")
+			}
+			assertContains(t, result.stdout, "Source:")
+			assertContains(t, result.stdout, "License:")
+			assertContains(t, result.stdout, "MIT")
+			assertNotContains(t, result.stdout, "target directory is required")
+			assertNotContains(t, result.stdout, "unknown flag")
+			assertNotContains(t, result.stdout, "+dirty")
+			assertNotContains(t, result.stdout, "0f51ae1")
+		})
+	}
+}
+
+func TestVersionDoesNotWriteOutputFile(t *testing.T) {
+	output := filepath.Join(t.TempDir(), "out.md")
+	result := runInProcess(t, "--version", "-o", output)
+	assertEqual(t, "exit code", result.code, cli.ExitSuccess)
+	assertEqual(t, "stderr", result.stderr, "")
+	if _, err := os.Stat(output); !os.IsNotExist(err) {
+		t.Fatalf("version should not create output file, stat err = %v", err)
+	}
+}
+
+func TestHelpWinsOverVersion(t *testing.T) {
+	for _, args := range [][]string{{"--help", "--version"}, {"--version", "--help"}} {
+		t.Run(strings.Join(args, " "), func(t *testing.T) {
+			result := runInProcess(t, args...)
+			assertEqual(t, "exit code", result.code, cli.ExitSuccess)
+			assertEqual(t, "stderr", result.stderr, "")
+			assertContains(t, result.stdout, "Usage:")
+			assertContains(t, result.stdout, "--version")
+			assertNotContains(t, result.stdout, "Source:")
+			assertNotContains(t, result.stdout, "License:")
+		})
 	}
 }
 

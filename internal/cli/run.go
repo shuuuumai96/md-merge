@@ -3,10 +3,20 @@ package cli
 import (
 	"fmt"
 	"io"
+	"runtime/debug"
+	"strings"
 
 	"github.com/shuuuumai96/md-merge/internal/output"
 	"github.com/shuuuumai96/md-merge/internal/render"
 	"github.com/shuuuumai96/md-merge/internal/scan"
+)
+
+var version = "dev"
+
+const (
+	programName = "md-merge"
+	sourceURL   = "https://github.com/shuuuumai96/md-merge"
+	licenseName = "MIT"
 )
 
 const helpText = `md-merge recursively finds Markdown files under a directory and merges them into one Markdown document.
@@ -24,6 +34,7 @@ Options:
       --strict              Stop on unreadable files, invalid UTF-8, or max-size skips
       --max-size <bytes>    Skip files larger than this size; 0 means unlimited
   -h, --help                Show this help message
+      --version             Show version information
 
 Exit codes are documented in README.md.
 `
@@ -31,6 +42,13 @@ Exit codes are documented in README.md.
 func Main(args []string, stdout io.Writer, stderr io.Writer) int {
 	if isHelpRequested(args) {
 		if _, err := io.WriteString(stdout, helpText); err != nil {
+			fmt.Fprintln(stderr, "error:", err)
+			return ExitGeneralError
+		}
+		return ExitSuccess
+	}
+	if isVersionRequested(args) {
+		if _, err := io.WriteString(stdout, versionText()); err != nil {
 			fmt.Fprintln(stderr, "error:", err)
 			return ExitGeneralError
 		}
@@ -116,4 +134,44 @@ func isHelpRequested(args []string) bool {
 		}
 	}
 	return false
+}
+
+func isVersionRequested(args []string) bool {
+	for _, arg := range args {
+		if arg == "--version" {
+			return true
+		}
+	}
+	return false
+}
+
+func resolvedVersion() string {
+	if version != "" && version != "dev" {
+		return version
+	}
+
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if isReleaseVersion(info.Main.Version) {
+			return info.Main.Version
+		}
+	}
+
+	return version
+}
+
+func isReleaseVersion(value string) bool {
+	if value == "" || value == "(devel)" {
+		return false
+	}
+	if strings.Contains(value, "+") {
+		return false
+	}
+	if strings.HasPrefix(value, "v0.0.0-") {
+		return false
+	}
+	return true
+}
+
+func versionText() string {
+	return fmt.Sprintf("%s %s\nSource: %s\nLicense: %s\n", programName, resolvedVersion(), sourceURL, licenseName)
 }
